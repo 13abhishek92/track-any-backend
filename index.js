@@ -1,4 +1,4 @@
-// backend/index.js
+
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
@@ -27,17 +27,22 @@ app.get("/api/track", async (req, res) => {
   const { awb } = req.query;
   if (!awb) return res.status(400).send("AWB number is required.");
 
+  const keywords = ["Delivered", "In Transit", "Out for Delivery", "Shipped", "Shipment", "Expected"];
+
   for (let courier of couriers) {
     const url = courier.url + awb;
     try {
-      const response = await axios.get(url, { timeout: 5000 });
-      if (response.status === 200 && response.data) {
+      const response = await axios.get(url, { timeout: 7000 });
+      const text = response.data;
+
+      if (typeof text === "string" && keywords.some(word => text.includes(word))) {
         return res.json({ success: true, name: courier.name, url });
       }
     } catch (e) {
       continue;
     }
   }
+
   res.json({ success: false });
 });
 
